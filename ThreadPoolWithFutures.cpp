@@ -190,6 +190,9 @@ int main()
 	void* data = (void*)new int[10];
 
 	vector<future<bool>> futures;
+	/*
+	Only MOVE will work as futures are not copyable.!
+	*/
 	futures.emplace_back(std::move(p.enqueue(task, data)));
 	futures.emplace_back(std::move(p.enqueue(task, data)));
 	futures.emplace_back(std::move(p.enqueue(task, data)));
