@@ -32,3 +32,6 @@ Lock-free stacks require atomic updates to memory references, not just integer c
 ✅ A linked list ensures that each push/pop operation only modifies independent memory locations.
 
 
+To address the concurrency issue in the array-based stack's push() function, we must recognize the fundamental limitation of fixed-size arrays in lock-free designs. 
+The key problem arises because incrementing the top index (via CAS) and writing data to the array are separate operations, 
+creating a window where a concurrent pop() could access uninitialized data
