@@ -1,0 +1,34 @@
+Why Can't We Solve This Without Locks?
+Atomic CAS (compare_exchange_weak) updates top but does not reserve memory in advance.
+
+Multiple threads can successfully execute CAS, but the actual writes to data[] can be interleaved, leading to race conditions.
+There is no way to guarantee that oldTop + 1 is still valid after CAS succeeds.
+
+Another thread could modify top before we write to data[oldTop + 1].
+In a fixed-size array (no dynamic memory), we can't move memory addresses safely.
+
+Lock-free linked lists avoid this problem by atomically modifying pointers instead of modifying fixed array indices.
+
+
+
+The Only Reliable Lock-Free Stack Needs Dynamic Memory
+The correct lock-free approach requires dynamic allocation (i.e., a linked list instead of an array).
+
+Each push() dynamically allocates a new node before modifying top.
+The CAS operation updates the atomic top pointer atomically.
+No memory overwrite issues occur because each thread operates on a separate node in memory.
+
+
+The Fixed-Size Array Approach Is Not Truly Lock-Free
+Key Limitations:
+Fixed-size arrays assume memory at data[oldTop + 1] is always safe to write, which is not true in multi-threaded CAS operations.
+No way to reserve memory atomically in a fixed array, so other threads might write before us.
+Lock-free stacks require atomic updates to memory references, not just integer counters.
+
+
+
+🛑 Conclusion
+🚫 Lock-free stacks should use dynamically allocated nodes, not fixed-size arrays.
+✅ A linked list ensures that each push/pop operation only modifies independent memory locations.
+
+
