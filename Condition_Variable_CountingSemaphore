@@ -1,0 +1,35 @@
+#include <iostream>
+#include <thread>
+#include <vector>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+
+class WorkerPool {
+public:
+    WorkerPool(int maxCount) : maxPermits(maxCount), availablePermits(maxCount) {}
+
+    void work(int id) {
+        // Acquire a permit
+        {
+            std::unique_lock<std::mutex> lock(mtx);
+            cv.wait(lock, [this] { return availablePermits.load() > 0; });
+            availablePermits.fetch_sub(1, std::memory_order_acquire);  // Decrease count
+        } // Unlock before doing work ✅
+
+        // Critical section (simulating work)
+        std::cout << "Thread " << id << " is working.\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));  // Simulate work
+        std::cout << "Thread " << id << " is done.\n";
+
+        // Release permit (no mutex needed here)
+        availablePermits.fetch_add(1, std::memory_order_release);
+        cv.notify_one();  // Notify waiting threads
+    }
+
+private:
+    const int maxPermits;
+    std::atomic<int> availablePermits;  // Atomic permits count
+    std::mutex mtx;
+    std::condition_variable cv;
+};
